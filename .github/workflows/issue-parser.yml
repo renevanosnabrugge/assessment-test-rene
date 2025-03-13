@@ -2,7 +2,7 @@ name: Issue Forms Body Parser
 
 on:
   issues:
-    types: [opened, closed, reopened]
+    types: [opened, reopened]
 
 permissions: write-all
 
@@ -27,7 +27,7 @@ jobs:
           # remove the @ at the start
           handle="${handle#@}"
           
-          repoName="renevanosnabrugge/assessment-demo-$handle"
+          repoName="renevanosnabrugge/assessment-demo-$name"
           description="The $template assignment for $name"
           gh auth status
           echo "Description is $description"
