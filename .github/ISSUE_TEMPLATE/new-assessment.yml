@@ -1,0 +1,25 @@
+name: New Assessment
+description: Setup a new assessment
+title: "[Assessment]: " 
+labels: ['assessments']
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Name of the candidate
+      description: What is the name of the candidate?
+      placeholder: ex. The next best developer
+    validations:
+      required: true
+  - type: dropdown
+    id: template
+    attributes:
+      label: Template
+      description: Which template to use?
+      options:
+        - BakerBuddy
+        - CricStats
+        - PritiX
+        - empty-repo
+    validations:
+      required: true

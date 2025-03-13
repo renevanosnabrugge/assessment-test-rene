@@ -1,0 +1,74 @@
+name: Issue Forms Body Parser
+
+on:
+  issues:
+    types: [opened, closed, reopened]
+
+permissions: write-all
+
+jobs:
+  provision:
+    if: github.event.action == 'opened' || github.event.action == 'reopened'
+    runs-on: ubuntu-latest
+    steps:    
+      - name: Get Token
+        id: get_workflow_token
+        uses: peter-murray/workflow-application-token-action@v3
+        with:
+          application_id: ${{ vars.GH_AUTOMATION_APP_ID }}
+          application_private_key: ${{ secrets.GH_AUTOMATION_APP_SECRET }}
+          organization: ${{ github.repository_owner }}
+          
+      - name: Issue Forms Body Parser
+        id: parse
+        uses: zentered/issue-forms-body-parser@v2.2.0
+      - run: echo ${{ toJSON(steps.parse.outputs.data) }}
+
+      - name: Create repo
+        id: create
+        run: |
+          json=${{ toJSON(steps.parse.outputs.data) }}
+          name=`echo $(jq -r '."name-of-the-candidate".text' <<< "$json")`
+          template=`echo $(jq -r '."template".text' <<< "$json")`
+        
+          # remove the @ at the start
+          handle="${handle#@}"
+          
+          repoName="renevanosnabrugge/assessment-demo-$handle"
+          description="The $template assignment for $name"
+          gh auth status
+          echo "Description is $description"
+          echo "Creating repo for handle [$handle] from template [$template] to [$repoName]"
+
+          gh repo create $repoName --private --template https://github.com/renevanosnabrugge/$template # --description $description
+
+          # somehow this still gives an issue
+          #gh repo edit $repoName --description $description
+
+          # wait for the repo to be created
+          sleep 30
+
+          echo "repoName=$repoName" >> $GITHUB_OUTPUT
+          echo "name=$name" >> $GITHUB_OUTPUT
+          echo "template=$template" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add Labels
+        id: add-labels
+        uses: issue-ops/labeler@v0.1.2
+        with:
+          action: add
+          issue_number: ${{ github.event.issue.number }}
+          labels: |
+            ${{steps.create.outputs.template}}
+            ${{steps.create.outputs.teamRegion}}
+
+      - name: Create comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            A new repository is [created][1]! :sparkles:
+          reactions: 'hooray'
+    
