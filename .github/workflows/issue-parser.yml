@@ -11,14 +11,7 @@ jobs:
     if: github.event.action == 'opened' || github.event.action == 'reopened'
     runs-on: ubuntu-latest
     steps:    
-      - name: Get Token
-        id: get_workflow_token
-        uses: peter-murray/workflow-application-token-action@v3
-        with:
-          application_id: ${{ vars.GH_AUTOMATION_APP_ID }}
-          application_private_key: ${{ secrets.GH_AUTOMATION_APP_SECRET }}
-          organization: ${{ github.repository_owner }}
-          
+         
       - name: Issue Forms Body Parser
         id: parse
         uses: zentered/issue-forms-body-parser@v2.2.0
